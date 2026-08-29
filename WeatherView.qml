@@ -241,9 +241,40 @@ KeyboardPanel {
         }
 
         Column {
-          visible: root.editingLocation && !root.savingLocation && root.locationSuggestions.length > 0
+          visible: root.editingLocation && !root.savingLocation
+            && (root.geocodeLoading || root.locationSuggestions.length > 0)
           width: parent.width
           spacing: 0
+
+          Item {
+            visible: root.geocodeLoading
+            width: parent.width
+            height: visible ? searchingRow.implicitHeight + root.rowPadding * 2 : 0
+
+            Row {
+              id: searchingRow
+              anchors.centerIn: parent
+              spacing: root.itemGap
+
+              Text {
+                text: "󰦖"
+                color: Qt.darker(root.bar.foreground, 1.35)
+                font.family: root.bar.fontFamily
+                font.pixelSize: Style.font.bodySmall
+                RotationAnimator on rotation {
+                  running: root.geocodeLoading
+                  from: 0; to: 360; duration: 800; loops: Animation.Infinite
+                }
+              }
+              Text {
+                text: "Searching…"
+                color: Qt.darker(root.bar.foreground, 1.35)
+                font.family: root.bar.fontFamily
+                font.pixelSize: Style.font.bodySmall
+                font.italic: true
+              }
+            }
+          }
 
           Repeater {
             model: root.locationSuggestions

@@ -233,6 +233,7 @@ Panel {
   property int suggestionIndex: 0
   property string geocodePendingQuery: ""
   property string geocodeActiveQuery: ""
+  property bool geocodeLoading: false
   property string locationSuggestionsQuery: ""
   property string locationSaveError: ""
 
@@ -349,6 +350,7 @@ Panel {
     locationSuggestions = []
     locationSuggestionsQuery = ""
     locationSaveError = ""
+    geocodeLoading = false
     suggestionIndex = 0
     Qt.callLater(function() {
       weatherView.beginLocationEdit(root.configuredLocation)
@@ -363,6 +365,7 @@ Panel {
     locationSuggestionsQuery = ""
     locationSaveError = ""
     geocodePendingQuery = ""
+    geocodeLoading = false
     geocodeDebounce.stop()
     Qt.callLater(function() { weatherView.focusPanel() })
   }
@@ -420,6 +423,8 @@ Panel {
     var query = weatherView.locationText.trim().slice(0, 200)
     if (query.length < 2) {
       locationSuggestions = []
+      geocodePendingQuery = ""
+      geocodeLoading = false
       return
     }
     geocodePendingQuery = query
@@ -436,6 +441,15 @@ Panel {
   }
 
   function scheduleGeocode() {
+    var query = weatherView.locationText.trim().slice(0, 200)
+    if (query.length < 2) {
+      geocodePendingQuery = ""
+      geocodeLoading = false
+      geocodeDebounce.stop()
+      return
+    }
+    geocodePendingQuery = query
+    geocodeLoading = true
     geocodeDebounce.restart()
   }
 
@@ -627,7 +641,11 @@ Panel {
           root.locationSuggestionsQuery = currentQuery
           root.suggestionIndex = 0
         }
-        if (root.geocodePendingQuery !== root.geocodeActiveQuery) Qt.callLater(root.startGeocode)
+        if (root.geocodePendingQuery !== root.geocodeActiveQuery) {
+          Qt.callLater(root.startGeocode)
+        } else {
+          root.geocodeLoading = false
+        }
       }
     }
   }
