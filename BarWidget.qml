@@ -78,8 +78,8 @@ BarWidget {
       if (!panelLoader.item) return ""
       var icon = panelLoader.item.label || ""
       var temperature = panelLoader.item.reportTempNum || ""
-      if (icon === "" || temperature === "") return "󰖐  —" + panelLoader.item.tempUnit
-      return temperature === "" ? icon : icon + "  " + temperature + panelLoader.item.tempUnit
+      if (icon === "" || temperature === "") return "󰖐 —" + panelLoader.item.tempUnit
+      return icon + " " + temperature + panelLoader.item.tempUnit
     }
     horizontalMargin: 6.5
     // Tooltip suppressed because the panel is the detail view.
