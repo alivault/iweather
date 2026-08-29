@@ -260,6 +260,7 @@ Panel {
   readonly property var hourlyForecast: Model.hourlyForecast(nwsReport, dailyForecastReport, currentTimeMs)
   readonly property var todayHighLow: Model.todayHighLow(dailyForecastReport, Qt.formatDate(new Date(), "yyyy-MM-dd"))
   readonly property var activeAlerts: nwsReport && nwsReport.alerts ? nwsReport.alerts : []
+  readonly property string nwsSourceUrl: nwsReport && nwsReport.sourceUrl ? String(nwsReport.sourceUrl) : ""
   readonly property string reportCountry: areaInfo && areaInfo.country && areaInfo.country[0] ? areaInfo.country[0].value : ""
 
   readonly property bool useImperial: Model.shouldUseImperial(setting("unit", ""), Qt.locale().name, reportCountry)
@@ -275,6 +276,11 @@ Panel {
   readonly property string alertsSummary: Model.alertSummary(activeAlerts)
   readonly property real forecastRangeMin: forecastRange("min")
   readonly property real forecastRangeMax: forecastRange("max")
+
+  function openNwsSource() {
+    if (/^https:\/\/forecast\.weather\.gov\//.test(root.nwsSourceUrl))
+      Qt.openUrlExternally(root.nwsSourceUrl)
+  }
 
   function refresh() {
     // Each full refresh cycle gets a fresh retry budget, so an earlier

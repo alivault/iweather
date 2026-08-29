@@ -61,10 +61,17 @@ forecast=$(curl "${curl_args[@]}" "$forecast_url")
 hourly=$(curl "${curl_args[@]}" "$hourly_url")
 alerts=$(curl "${curl_args[@]}" \
   "https://api.weather.gov/alerts/active?point=$latitude,$longitude" 2>/dev/null || printf '{"features":[]}')
+source_url="https://forecast.weather.gov/MapClick.php?lat=$latitude&lon=$longitude"
 
 jq -n \
   --argjson observation "$observation" \
   --argjson forecast "$(jq -c '{generatedAt: .properties.generatedAt, periods: .properties.periods}' <<<"$forecast")" \
   --argjson hourly "$(jq -c '{generatedAt: .properties.generatedAt, periods: .properties.periods}' <<<"$hourly")" \
-  --argjson alerts "$(jq -c '[.features[].properties | {event, headline, severity, urgency}]' <<<"$alerts")" \
-  '{observation: $observation, forecast: $forecast, hourly: $hourly, alerts: $alerts}'
+  --argjson alerts "$(jq -c '[.features[].properties | {
+    event, headline, severity, urgency,
+    description: (.description // ""),
+    instruction: (.instruction // ""),
+    sent, expires
+  }]' <<<"$alerts")" \
+  --arg sourceUrl "$source_url" \
+  '{observation: $observation, forecast: $forecast, hourly: $hourly, alerts: $alerts, sourceUrl: $sourceUrl}'
