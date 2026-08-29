@@ -329,7 +329,8 @@ Panel {
       + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day"
       + "&forecast_days=5"
       + "&timezone=auto"
-    dailyForecastProc.command = ["curl", "-fsS", "--max-time", "5", url]
+    dailyForecastProc.command = ["curl", "--proto", "=https", "--max-filesize", "2097152",
+      "-fsS", "--max-time", "5", url]
     dailyForecastProc.running = true
   }
 
@@ -421,7 +422,8 @@ Panel {
 
   function startGeocode() {
     geocodeActiveQuery = geocodePendingQuery
-    geocodeProc.command = ["curl", "-fsS", "--max-time", "5",
+    geocodeProc.command = ["curl", "--proto", "=https", "--max-filesize", "2097152",
+      "-fsS", "--max-time", "5",
       "https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(geocodeActiveQuery) + "&count=5&language=en&format=json"]
     geocodeProc.running = true
   }
@@ -523,7 +525,8 @@ Panel {
 
   Process {
     id: forecastProc
-    command: ["curl", "-fsS", "--max-time", "10", "https://wttr.in/" + root.locationQuery + "?format=j1"]
+    command: ["curl", "--proto", "=https", "--max-filesize", "2097152",
+      "-fsS", "--max-time", "10", "https://wttr.in/" + root.locationQuery + "?format=j1"]
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
@@ -664,7 +667,8 @@ Panel {
 
   Process {
     id: locationProc
-    command: ["curl", "-fsS", "--max-time", "4", "https://wttr.in/?format=%l"]
+    command: ["curl", "--proto", "=https", "--max-filesize", "65536",
+      "-fsS", "--max-time", "4", "https://wttr.in/?format=%l"]
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
@@ -946,6 +950,7 @@ Panel {
 
                   Text {
                     text: modelData.name
+                    textFormat: Text.PlainText
                     color: index === root.suggestionIndex
                       ? Style.hoverStateColor(root.bar.foreground, Color.accent) : root.bar.foreground
                     font.family: root.bar.fontFamily
@@ -953,6 +958,7 @@ Panel {
                   }
                   Text {
                     text: modelData.description
+                    textFormat: Text.PlainText
                     color: Qt.darker(root.bar.foreground, 1.5)
                     font.family: root.bar.fontFamily
                     font.pixelSize: Style.font.bodySmall
@@ -990,6 +996,7 @@ Panel {
               anchors.rightMargin: root.contentPadding
               anchors.verticalCenter: parent.verticalCenter
               text: "  " + root.alertsSummary
+              textFormat: Text.PlainText
               color: root.bar.urgent
               font.family: root.bar.fontFamily
               font.pixelSize: root.alertSize

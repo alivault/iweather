@@ -8,12 +8,24 @@ set -euo pipefail
 latitude=${1:?latitude required}
 longitude=${2:?longitude required}
 user_agent="ali.weather/1.0 (personal Omarchy weather widget)"
-curl_args=(-fsS --max-time 8 -H "User-Agent: $user_agent" -H "Accept: application/geo+json")
+curl_args=(--proto '=https' --max-filesize 2097152 -fsS --max-time 8
+  -H "User-Agent: $user_agent" -H "Accept: application/geo+json")
+
+require_nws_url() {
+  [[ $1 == https://api.weather.gov/* ]] || {
+    printf 'Refusing unexpected NWS URL: %s\n' "$1" >&2
+    return 1
+  }
+}
 
 points=$(curl "${curl_args[@]}" "https://api.weather.gov/points/$latitude,$longitude")
 stations_url=$(jq -er '.properties.observationStations' <<<"$points")
 forecast_url=$(jq -er '.properties.forecast' <<<"$points")
 hourly_url=$(jq -er '.properties.forecastHourly' <<<"$points")
+
+require_nws_url "$stations_url"
+require_nws_url "$forecast_url"
+require_nws_url "$hourly_url"
 
 stations=$(curl "${curl_args[@]}" "$stations_url")
 observation=null

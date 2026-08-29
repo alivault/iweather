@@ -25,6 +25,7 @@ Item {
   Text {
     id: label
     width: root.width
+    textFormat: Text.PlainText
     // FontMetrics coordinates are relative to the baseline. Move the Text's
     // baseline so the top of its ink bounds starts at y=0 in this item.
     y: -baselineOffset - root.inkBounds.y
