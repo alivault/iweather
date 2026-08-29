@@ -54,6 +54,13 @@ test("NWS observations must be recent and cannot be far in the future", () => {
   assert.equal(model.nwsCurrentCondition(report("2025-12-31T23:30:00Z"), null, now).source, "NWS")
 })
 
+test("current conditions wait for the final source on initial load", () => {
+  assert.equal(model.currentSourceReady(-1, 2, "United States", -1), false)
+  assert.equal(model.currentSourceReady(2, 2, "United States", -1), false)
+  assert.equal(model.currentSourceReady(2, 2, "United States", 2), true)
+  assert.equal(model.currentSourceReady(2, 2, "Norway", -1), true)
+})
+
 test("weather API coordinates and location names are encoded safely", () => {
   assert.equal(model.wttrLocationQuery("ignored", 40.7, -74), "40.7,-74")
   assert.equal(model.wttrLocationQuery("New York/Manhattan", null, null), "New%20York%2FManhattan")

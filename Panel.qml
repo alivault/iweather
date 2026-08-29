@@ -68,6 +68,7 @@ Panel {
 
   // Parsed wttr.in j1 response. Kept on failure so stale data stays visible.
   property var report: null
+  property int reportGeneration: -1
   property var dailyForecastReport: null
   property string wttrLocation: ""
 
@@ -87,6 +88,7 @@ Panel {
     locationGeneration++
     if (savingLocation) savingLocationQueryStarted = true
     nwsReport = null
+    nwsFinishedGeneration = -1
     forecastRetries = 0
     dailyForecastRetries = 0
     forecastProc.running = false
@@ -240,6 +242,7 @@ Panel {
   // Shared hero/bar icon state, updated with each successful weather response.
   property string label: ""
   property var nwsReport: null
+  property int nwsFinishedGeneration: -1
 
   // wttr's current conditions when available; open-meteo's (bundled with the
   // much faster daily forecast fetch) fill the hero while wttr is in flight.
@@ -249,7 +252,9 @@ Panel {
   readonly property var openMeteoCurrent: Model.openMeteoCurrentCondition(dailyForecastReport)
   readonly property var wttrCurrent: (report && report.current_condition && report.current_condition[0]) ? report.current_condition[0] : null
   readonly property var nwsCurrent: Model.nwsCurrentCondition(nwsReport, openMeteoCurrent, currentTimeMs)
-  readonly property var current: nwsCurrent || openMeteoCurrent || wttrCurrent
+  readonly property bool currentSourceReady: Model.currentSourceReady(
+    reportGeneration, locationGeneration, reportCountry, nwsFinishedGeneration)
+  readonly property var current: currentSourceReady ? (nwsCurrent || openMeteoCurrent || wttrCurrent) : null
   readonly property var areaInfo: report && report.nearest_area && report.nearest_area[0] ? report.nearest_area[0] : null
   readonly property var forecastDays: buildForecastDays()
   readonly property var hourlyForecast: Model.hourlyForecast(nwsReport, dailyForecastReport, currentTimeMs)
@@ -286,7 +291,8 @@ Panel {
     // to wait for the slow wttr response. Without them it's a no-op until
     // wttr reports the detected area.
     refreshDailyForecast(null)
-    if (Model.countryUsesNws(root.reportCountry)) refreshNws(null)
+    if (root.reportGeneration === root.locationGeneration && Model.countryUsesNws(root.reportCountry))
+      refreshNws(null)
   }
 
   function refreshNws(sourceReport) {
@@ -298,6 +304,7 @@ Panel {
       ? sourceArea.country[0].value : root.reportCountry
     if (!Model.countryUsesNws(country)) {
       root.nwsReport = null
+      root.nwsFinishedGeneration = root.locationGeneration
       return
     }
 
@@ -306,7 +313,10 @@ Panel {
       if (!sourceArea) return
       coordinates = Model.validCoordinates(sourceArea.latitude, sourceArea.longitude)
     }
-    if (!coordinates) return
+    if (!coordinates) {
+      root.nwsFinishedGeneration = root.locationGeneration
+      return
+    }
 
     nwsProc.requestGeneration = root.locationGeneration
     nwsProc.command = [root.nwsScriptPath,
@@ -532,6 +542,7 @@ Panel {
         try {
           var parsed = JSON.parse(raw)
           root.report = parsed
+          root.reportGeneration = forecastProc.requestGeneration
           if (!root.hasConfiguredCoordinates)
             root.label = Model.provisionalCurrentIcon(parsed.current_condition && parsed.current_condition[0], root.label)
           root.forecastRetries = 0
@@ -619,13 +630,17 @@ Panel {
       onStreamFinished: {
         if (nwsProc.requestGeneration !== root.locationGeneration) return
         var raw = String(text || "").trim()
-        if (!raw) return
+        if (!raw) {
+          root.nwsFinishedGeneration = nwsProc.requestGeneration
+          return
+        }
         try {
           root.nwsReport = JSON.parse(raw)
           root.label = Model.currentIcon(root.current, root.label)
         } catch (e) {
           // Keep the last NWS report and continue using Open-Meteo as needed.
         }
+        root.nwsFinishedGeneration = nwsProc.requestGeneration
       }
     }
   }

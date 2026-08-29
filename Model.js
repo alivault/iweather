@@ -132,6 +132,11 @@ function countryUsesNws(countryName) {
   return country === "us" || country === "usa" || country === "united states" || country === "united states of america"
 }
 
+function currentSourceReady(reportGeneration, locationGeneration, countryName, nwsFinishedGeneration) {
+  if (Number(reportGeneration) !== Number(locationGeneration)) return false
+  return !countryUsesNws(countryName) || Number(nwsFinishedGeneration) === Number(locationGeneration)
+}
+
 function shouldUseImperial(unitOverride, localeName, countryName) {
   var unit = normalizedUnit(unitOverride)
   if (unit === "imperial") return true
@@ -495,6 +500,7 @@ if (typeof module !== "undefined") {
     localeUsesImperial: localeUsesImperial,
     countryUsesImperial: countryUsesImperial,
     countryUsesNws: countryUsesNws,
+    currentSourceReady: currentSourceReady,
     shouldUseImperial: shouldUseImperial,
     dayName: dayName,
     openMeteoForecastDays: openMeteoForecastDays,
