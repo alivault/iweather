@@ -91,13 +91,6 @@ KeyboardPanel {
                 font.bold: true
                 font.letterSpacing: 0.8
               }
-              TightText {
-                text: ""
-                color: Qt.darker(root.bar.foreground, 1.35)
-                font.family: root.bar.fontFamily
-                font.pixelSize: root.locationSize
-                anchors.verticalCenter: parent.verticalCenter
-              }
             }
 
             Row {
