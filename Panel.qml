@@ -7,12 +7,13 @@ import "Model.js" as Model
 
 Panel {
   id: root
-  moduleName: "omarchy.weather"
-  ipcTarget: "omarchy.weather"
+  moduleName: "ali.weather"
+  ipcTarget: "ali.weather"
   manageIpc: false
 
   property var anchorItem: null
-  property bool openedFromHotkey: false
+  readonly property string nwsScriptPath: decodeURIComponent(
+    String(Qt.resolvedUrl("nws-weather.sh")).replace(/^file:\/\//, ""))
 
   // The bar tracks the widget mounted in its slot — BarWidget.qml — not this
   // nested panel. Everything the bar identifies a panel by has to be that
@@ -23,7 +24,6 @@ Panel {
   readonly property var barIdentity: hostWidget || root
 
   function open() {
-    openedFromHotkey = false
     setCenterHoverRevealSuppressed(false)
     root.controller.show()
     locationFile.reload()
@@ -31,7 +31,6 @@ Panel {
   }
 
   function openFromHotkey() {
-    openedFromHotkey = true
     root.controller.show()
     locationFile.reload()
     root.refresh()
@@ -266,12 +265,6 @@ Panel {
   readonly property string reportLocation:  configuredLocation || wttrLocation || (areaInfo && areaInfo.areaName && areaInfo.areaName[0] ? areaInfo.areaName[0].value : "")
   readonly property string reportTempNum:   current ? String(useImperial ? current.temp_F : current.temp_C) : ""
   readonly property string tempUnit:        "°" + (useImperial ? "F" : "C")
-  readonly property string reportFeels:     current ? formatTemp(useImperial ? current.FeelsLikeF : current.FeelsLikeC) : ""
-  readonly property string reportWind:      current ? (useImperial ? (current.windspeedMiles + " mph") : (current.windspeedKmph + " km/h")) : ""
-  readonly property string reportHumidity:  current ? (current.humidity + "%") : ""
-  readonly property string reportSource: current && current.source
-    ? (current.source === "NWS" && current.sourceStation ? "NWS · " + current.sourceStation : current.source)
-    : (wttrCurrent ? "wttr.in" : "")
   readonly property string conditionDescription: Model.weatherDescription(current, nwsReport)
   readonly property string alertsSummary: Model.alertSummary(activeAlerts)
   readonly property real forecastRangeMin: forecastRange("min")
@@ -315,7 +308,7 @@ Panel {
     if (!coordinates) return
 
     nwsProc.requestGeneration = root.locationGeneration
-    nwsProc.command = [Quickshell.env("HOME") + "/.config/omarchy/plugins/ali.weather/nws-weather.sh",
+    nwsProc.command = [root.nwsScriptPath,
       String(coordinates.latitude), String(coordinates.longitude)]
     nwsProc.running = true
   }
@@ -447,30 +440,6 @@ Panel {
     return Model.buildForecastDays(report, dailyForecastReport, nwsReport, Qt.formatDate(new Date(), "yyyy-MM-dd"))
   }
 
-  function openMeteoForecastDays() {
-    return Model.openMeteoForecastDays(dailyForecastReport, Qt.formatDate(new Date(), "yyyy-MM-dd"))
-  }
-
-  function wttrNextForecastDays() {
-    return Model.wttrNextForecastDays(report, Qt.formatDate(new Date(), "yyyy-MM-dd"))
-  }
-
-  function isFutureForecastDate(dateString) {
-    return Model.isFutureForecastDate(dateString, Qt.formatDate(new Date(), "yyyy-MM-dd"))
-  }
-
-  function roundedTemp(value) {
-    return Model.roundedTemp(value)
-  }
-
-  function celsiusToFahrenheit(value) {
-    return Model.celsiusToFahrenheit(value)
-  }
-
-  function formatTemp(value) {
-    return Model.formatTemp(value, useImperial)
-  }
-
   function dayName(dateString) {
     return Model.dayName(dateString, function(date) { return Qt.formatDate(date, "dddd") })
   }
@@ -527,15 +496,6 @@ Panel {
       }
     }
     return isFinite(best) ? best : 0
-  }
-
-  function iconForOpenMeteoCode(code) {
-    return Model.iconForOpenMeteoCode(code)
-  }
-
-  // Mirrors omarchy-weather-icon's wttr.in code → nerd-font glyph mapping.
-  function iconForCode(code, night) {
-    return Model.iconForCode(code, night)
   }
 
   Process {
