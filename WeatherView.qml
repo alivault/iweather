@@ -8,7 +8,7 @@ KeyboardPanel {
   readonly property var root: weather
   property alias locationText: locationField.text
   property bool alertsExpanded: false
-  readonly property int maxPanelHeight: Style.space(560)
+  readonly property int maxAlertsHeight: Style.space(300)
 
   function beginLocationEdit(text) {
     locationField.text = text
@@ -30,7 +30,7 @@ KeyboardPanel {
   contentWidth: panel.fittedContentWidth(
     root.naturalInnerWidth + panel.padding * 2
       + Border.left(panel.borderSpec) + Border.right(panel.borderSpec))
-  contentHeight: panel.fittedContentHeight(weatherColumn.implicitHeight, panel.maxPanelHeight)
+  contentHeight: panel.fittedContentHeight(weatherColumn.implicitHeight)
 
   PanelKeyCatcher {
     id: keyCatcher
@@ -370,107 +370,119 @@ KeyboardPanel {
             }
           }
 
-          Column {
+          Flickable {
+            id: alertsScroll
             visible: panel.alertsExpanded
             width: parent.width
-            spacing: 0
+            height: visible ? Math.min(alertsContent.implicitHeight, panel.maxAlertsHeight) : 0
+            contentWidth: width
+            contentHeight: alertsContent.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: contentHeight > height
 
-            Repeater {
-              model: root.activeAlerts
+            Column {
+              id: alertsContent
+              width: alertsScroll.width
+              spacing: 0
+
+              Repeater {
+                model: root.activeAlerts
+
+                Item {
+                  required property var modelData
+                  required property int index
+                  width: parent.width
+                  height: alertDetails.implicitHeight + root.rowPadding * 2
+
+                  Rectangle {
+                    visible: index > 0
+                    anchors.left: parent.left
+                    anchors.leftMargin: root.contentPadding
+                    anchors.right: parent.right
+                    anchors.rightMargin: root.contentPadding
+                    height: Style.spacing.hairline
+                    color: root.bar.foreground
+                    opacity: 0.12
+                  }
+
+                  Column {
+                    id: alertDetails
+                    anchors.left: parent.left
+                    anchors.leftMargin: root.contentPadding
+                    anchors.right: parent.right
+                    anchors.rightMargin: root.contentPadding
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: root.itemGap
+
+                    Text {
+                      width: parent.width
+                      text: modelData.event || "Weather Alert"
+                      textFormat: Text.PlainText
+                      color: root.bar.urgent
+                      font.family: root.bar.fontFamily
+                      font.pixelSize: root.alertSize
+                      font.bold: true
+                      wrapMode: Text.WordWrap
+                    }
+                    Text {
+                      visible: text !== "" && text !== String(modelData.event || "")
+                      width: parent.width
+                      text: String(modelData.headline || "")
+                      textFormat: Text.PlainText
+                      color: root.bar.foreground
+                      font.family: root.bar.fontFamily
+                      font.pixelSize: Style.font.bodySmall
+                      font.bold: true
+                      wrapMode: Text.WordWrap
+                    }
+                    Text {
+                      visible: text !== ""
+                      width: parent.width
+                      text: String(modelData.description || "")
+                      textFormat: Text.PlainText
+                      color: root.bar.foreground
+                      font.family: root.bar.fontFamily
+                      font.pixelSize: Style.font.bodySmall
+                      wrapMode: Text.WordWrap
+                    }
+                    Text {
+                      visible: text !== ""
+                      width: parent.width
+                      text: String(modelData.instruction || "")
+                      textFormat: Text.PlainText
+                      color: Qt.darker(root.bar.foreground, 1.35)
+                      font.family: root.bar.fontFamily
+                      font.pixelSize: Style.font.bodySmall
+                      font.italic: true
+                      wrapMode: Text.WordWrap
+                    }
+                  }
+                }
+              }
 
               Item {
-                required property var modelData
-                required property int index
+                visible: root.nwsSourceUrl !== ""
                 width: parent.width
-                height: alertDetails.implicitHeight + root.rowPadding * 2
+                height: sourceLink.implicitHeight + root.rowPadding * 2
 
-                Rectangle {
-                  visible: index > 0
+                Text {
+                  id: sourceLink
                   anchors.left: parent.left
                   anchors.leftMargin: root.contentPadding
-                  anchors.right: parent.right
-                  anchors.rightMargin: root.contentPadding
-                  height: Style.spacing.hairline
-                  color: root.bar.foreground
-                  opacity: 0.12
-                }
-
-                Column {
-                  id: alertDetails
-                  anchors.left: parent.left
-                  anchors.leftMargin: root.contentPadding
-                  anchors.right: parent.right
-                  anchors.rightMargin: root.contentPadding
                   anchors.verticalCenter: parent.verticalCenter
-                  spacing: root.itemGap
-
-                  Text {
-                    width: parent.width
-                    text: modelData.event || "Weather Alert"
-                    textFormat: Text.PlainText
-                    color: root.bar.urgent
-                    font.family: root.bar.fontFamily
-                    font.pixelSize: root.alertSize
-                    font.bold: true
-                    wrapMode: Text.WordWrap
-                  }
-                  Text {
-                    visible: text !== "" && text !== String(modelData.event || "")
-                    width: parent.width
-                    text: String(modelData.headline || "")
-                    textFormat: Text.PlainText
-                    color: root.bar.foreground
-                    font.family: root.bar.fontFamily
-                    font.pixelSize: Style.font.bodySmall
-                    font.bold: true
-                    wrapMode: Text.WordWrap
-                  }
-                  Text {
-                    visible: text !== ""
-                    width: parent.width
-                    text: String(modelData.description || "")
-                    textFormat: Text.PlainText
-                    color: root.bar.foreground
-                    font.family: root.bar.fontFamily
-                    font.pixelSize: Style.font.bodySmall
-                    wrapMode: Text.WordWrap
-                  }
-                  Text {
-                    visible: text !== ""
-                    width: parent.width
-                    text: String(modelData.instruction || "")
-                    textFormat: Text.PlainText
-                    color: Qt.darker(root.bar.foreground, 1.35)
-                    font.family: root.bar.fontFamily
-                    font.pixelSize: Style.font.bodySmall
-                    font.italic: true
-                    wrapMode: Text.WordWrap
-                  }
+                  text: "Open alerts on weather.gov  ↗"
+                  color: Color.accent
+                  font.family: root.bar.fontFamily
+                  font.pixelSize: Style.font.bodySmall
+                  font.bold: true
                 }
-              }
-            }
-
-            Item {
-              visible: root.nwsSourceUrl !== ""
-              width: parent.width
-              height: sourceLink.implicitHeight + root.rowPadding * 2
-
-              Text {
-                id: sourceLink
-                anchors.left: parent.left
-                anchors.leftMargin: root.contentPadding
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Open alerts on weather.gov  ↗"
-                color: Color.accent
-                font.family: root.bar.fontFamily
-                font.pixelSize: Style.font.bodySmall
-                font.bold: true
-              }
-              MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.openNwsSource()
+                MouseArea {
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: root.openNwsSource()
+                }
               }
             }
           }
