@@ -144,7 +144,7 @@ KeyboardPanel {
                   width: Style.space(20)
                   height: Style.space(20)
                   anchors.right: parent.right
-                  anchors.rightMargin: Style.space(4)
+                  anchors.rightMargin: Math.max(0, (parent.height - height) / 2)
                   anchors.verticalCenter: parent.verticalCenter
                   radius: Math.min(4, Style.cornerRadius)
                   color: !root.savingLocation && clearLocationArea.containsMouse
