@@ -159,7 +159,7 @@ KeyboardPanel {
                 Text {
                   anchors.centerIn: parent
                   visible: root.savingLocation
-                  text: "󰦖"
+                  text: ""
                   font.family: root.bar.fontFamily
                   color: Qt.darker(root.bar.foreground, 1.35)
                   font.pixelSize: Style.font.bodySmall
@@ -257,7 +257,7 @@ KeyboardPanel {
               spacing: root.itemGap
 
               Text {
-                text: "󰦖"
+                text: ""
                 color: Qt.darker(root.bar.foreground, 1.35)
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.bodySmall
