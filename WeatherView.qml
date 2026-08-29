@@ -8,6 +8,7 @@ KeyboardPanel {
   readonly property var root: weather
   property alias locationText: locationField.text
   property bool alertsExpanded: false
+  readonly property int maxPanelHeight: Style.space(560)
 
   function beginLocationEdit(text) {
     locationField.text = text
@@ -29,7 +30,7 @@ KeyboardPanel {
   contentWidth: panel.fittedContentWidth(
     root.naturalInnerWidth + panel.padding * 2
       + Border.left(panel.borderSpec) + Border.right(panel.borderSpec))
-  contentHeight: panel.fittedContentHeight(weatherColumn.implicitHeight)
+  contentHeight: panel.fittedContentHeight(weatherColumn.implicitHeight, panel.maxPanelHeight)
 
   PanelKeyCatcher {
     id: keyCatcher
