@@ -6,7 +6,8 @@ location detection, and U.S. National Weather Service observations and alerts.
 ## Architecture
 
 - `BarWidget.qml` mounts the bar pill and lazy-loads the panel.
-- `Panel.qml` coordinates location state, remote requests, and popup presentation.
+- `Panel.qml` coordinates location state and remote requests.
+- `WeatherView.qml` contains the popup presentation.
 - `Model.js` contains pure parsing, normalization, and formatting functions.
 - `nws-weather.sh` combines the NWS point, station, forecast, and alert APIs.
 
