@@ -115,6 +115,7 @@ KeyboardPanel {
                 foreground: root.locationSaveError === "" ? root.bar.foreground : root.bar.urgent
                 font.family: root.bar.fontFamily
                 maximumLength: 200
+                rightPadding: horizontalPadding + Style.space(24)
                 onTextChanged: {
                   if (!root.editingLocation || root.savingLocation) return
                   root.locationSuggestions = []
@@ -138,43 +139,45 @@ KeyboardPanel {
                     event.accepted = true
                   }
                 }
-              }
 
-              Rectangle {
-                width: Style.space(20)
-                height: Style.space(20)
-                anchors.verticalCenter: parent.verticalCenter
-                radius: Math.min(4, Style.cornerRadius)
-                color: !root.savingLocation && clearLocationArea.containsMouse
-                  ? Style.hoverFillFor(root.bar.foreground, Color.accent) : "transparent"
+                Rectangle {
+                  width: Style.space(20)
+                  height: Style.space(20)
+                  anchors.right: parent.right
+                  anchors.rightMargin: Style.space(4)
+                  anchors.verticalCenter: parent.verticalCenter
+                  radius: Math.min(4, Style.cornerRadius)
+                  color: !root.savingLocation && clearLocationArea.containsMouse
+                    ? Style.hoverFillFor(root.bar.foreground, Color.accent) : "transparent"
 
-                Text {
-                  anchors.centerIn: parent
-                  visible: !root.savingLocation
-                  text: "✕"
-                  font.family: root.bar.fontFamily
-                  color: Qt.darker(root.bar.foreground, 1.35)
-                  font.pixelSize: Style.font.bodySmall
-                }
-                Text {
-                  anchors.centerIn: parent
-                  visible: root.savingLocation
-                  text: ""
-                  font.family: root.bar.fontFamily
-                  color: Qt.darker(root.bar.foreground, 1.35)
-                  font.pixelSize: Style.font.bodySmall
-                  RotationAnimator on rotation {
-                    running: root.savingLocation
-                    from: 0; to: 360; duration: 800; loops: Animation.Infinite
+                  Text {
+                    anchors.centerIn: parent
+                    visible: !root.savingLocation
+                    text: "✕"
+                    font.family: root.bar.fontFamily
+                    color: Qt.darker(root.bar.foreground, 1.35)
+                    font.pixelSize: Style.font.bodySmall
                   }
-                }
-                MouseArea {
-                  id: clearLocationArea
-                  anchors.fill: parent
-                  enabled: !root.savingLocation
-                  hoverEnabled: true
-                  cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                  onClicked: root.clearLocation()
+                  Text {
+                    anchors.centerIn: parent
+                    visible: root.savingLocation
+                    text: ""
+                    font.family: root.bar.fontFamily
+                    color: Qt.darker(root.bar.foreground, 1.35)
+                    font.pixelSize: Style.font.bodySmall
+                    RotationAnimator on rotation {
+                      running: root.savingLocation
+                      from: 0; to: 360; duration: 800; loops: Animation.Infinite
+                    }
+                  }
+                  MouseArea {
+                    id: clearLocationArea
+                    anchors.fill: parent
+                    enabled: !root.savingLocation
+                    hoverEnabled: true
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: root.clearLocation()
+                  }
                 }
               }
             }
