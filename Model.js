@@ -7,26 +7,36 @@ function parseLocationFile(raw) {
     var data = JSON.parse(String(raw || ""))
     if (!data || typeof data !== "object") return unset
 
-    var latitude = parseFloat(data.latitude)
-    var longitude = parseFloat(data.longitude)
-    var hasCoordinates = !isNaN(latitude) && !isNaN(longitude)
+    var coordinates = validCoordinates(data.latitude, data.longitude)
     return {
       name: typeof data.name === "string" ? data.name.replace(/^\s+|\s+$/g, "") : "",
-      latitude: hasCoordinates ? latitude : null,
-      longitude: hasCoordinates ? longitude : null
+      latitude: coordinates ? coordinates.latitude : null,
+      longitude: coordinates ? coordinates.longitude : null
     }
   } catch (e) {
     return unset
   }
 }
 
+function validCoordinates(latitudeValue, longitudeValue) {
+  if (latitudeValue === undefined || latitudeValue === null || latitudeValue === "" ||
+      longitudeValue === undefined || longitudeValue === null || longitudeValue === "") return null
+  if (typeof latitudeValue === "string" && latitudeValue.replace(/^\s+|\s+$/g, "") === "") return null
+  if (typeof longitudeValue === "string" && longitudeValue.replace(/^\s+|\s+$/g, "") === "") return null
+
+  var latitude = Number(latitudeValue)
+  var longitude = Number(longitudeValue)
+  if (!isFinite(latitude) || !isFinite(longitude)) return null
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null
+  return { latitude: latitude, longitude: longitude }
+}
+
 // wttr.in path segment for a configured location: exact coordinates when
 // both are present, the URL-encoded name as a fallback (hand-edited
 // weather.loc files may only carry a name), empty for IP auto-detect.
 function wttrLocationQuery(location, latitude, longitude) {
-  var lat = parseFloat(String(latitude))
-  var lon = parseFloat(String(longitude))
-  if (!isNaN(lat) && !isNaN(lon)) return lat + "," + lon
+  var coordinates = validCoordinates(latitude, longitude)
+  if (coordinates) return coordinates.latitude + "," + coordinates.longitude
 
   var name = String(location || "").replace(/^\s+|\s+$/g, "")
   return name === "" ? "" : encodeURIComponent(name)
@@ -42,13 +52,15 @@ function parseGeocodingResults(raw) {
     var out = []
     for (var i = 0; i < results.length; i++) {
       var r = results[i]
-      if (!r || !r.name || r.latitude === undefined || r.longitude === undefined) continue
+      if (!r || !r.name) continue
+      var coordinates = validCoordinates(r.latitude, r.longitude)
+      if (!coordinates) continue
       var region = [r.admin1, r.country].filter(function(part) { return !!part }).join(", ")
       out.push({
         name: String(r.name),
         description: region,
-        latitude: r.latitude,
-        longitude: r.longitude
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude
       })
     }
     return out
@@ -57,14 +69,15 @@ function parseGeocodingResults(raw) {
   }
 }
 
-function locationCommit(text, suggestions, selectedIndex) {
+function locationCommit(text, suggestions, selectedIndex, suggestionsQuery) {
   var name = String(text || "").replace(/^\s+|\s+$/g, "")
   if (name === "") return { name: "", latitude: null, longitude: null }
 
   var choices = suggestions || []
   var index = Math.max(0, Math.min(parseInt(selectedIndex, 10) || 0, choices.length - 1))
   var suggestion = choices[index]
-  if (suggestion) return suggestion
+  var query = String(suggestionsQuery || "").replace(/^\s+|\s+$/g, "")
+  if (suggestion && query === name) return suggestion
 
   return { name: name, latitude: null, longitude: null }
 }
@@ -192,7 +205,8 @@ function nwsCurrentCondition(nwsReport, fallback, nowMs) {
 
   var observedAt = Date.parse(String(obs.timestamp || ""))
   var now = Number(nowMs)
-  if (!isFinite(observedAt) || !isFinite(now) || now - observedAt > 90 * 60 * 1000) return null
+  var age = now - observedAt
+  if (!isFinite(observedAt) || !isFinite(now) || age < -5 * 60 * 1000 || age > 90 * 60 * 1000) return null
 
   var tempC = Number(obs.temperatureC)
   if (!isFinite(tempC)) return null
@@ -469,6 +483,7 @@ function iconForCode(code, night) {
 if (typeof module !== "undefined") {
   module.exports = {
     parseLocationFile: parseLocationFile,
+    validCoordinates: validCoordinates,
     wttrLocationQuery: wttrLocationQuery,
     parseGeocodingResults: parseGeocodingResults,
     locationCommit: locationCommit,

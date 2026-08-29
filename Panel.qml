@@ -79,17 +79,21 @@ Panel {
   property var configuredLocationState: ({ name: "", latitude: null, longitude: null })
   readonly property string configuredLocation: configuredLocationState.name
   readonly property string locationQuery: Model.wttrLocationQuery(configuredLocationState.name, configuredLocationState.latitude, configuredLocationState.longitude)
+  property int locationGeneration: 0
 
   // Keep the previous report visible while the new location loads. The
   // editor remains open with a spinner, so stale data is never presented
   // under the newly configured location label.
   onLocationQueryChanged: {
+    locationGeneration++
     if (savingLocation) savingLocationQueryStarted = true
     nwsReport = null
     forecastRetries = 0
     dailyForecastRetries = 0
     forecastProc.running = false
     dailyForecastProc.running = false
+    nwsProc.running = false
+    locationProc.running = false
     Qt.callLater(refresh)
   }
 
@@ -230,6 +234,8 @@ Panel {
   property int suggestionIndex: 0
   property string geocodePendingQuery: ""
   property string geocodeActiveQuery: ""
+  property string locationSuggestionsQuery: ""
+  property string locationSaveError: ""
 
   // Shared hero/bar icon state, updated with each successful weather response.
   property string label: ""
@@ -237,14 +243,16 @@ Panel {
 
   // wttr's current conditions when available; open-meteo's (bundled with the
   // much faster daily forecast fetch) fill the hero while wttr is in flight.
-  readonly property bool hasConfiguredCoordinates: !isNaN(parseFloat(String(configuredLocationState.latitude))) && !isNaN(parseFloat(String(configuredLocationState.longitude)))
+  readonly property var configuredCoordinates: Model.validCoordinates(configuredLocationState.latitude, configuredLocationState.longitude)
+  readonly property bool hasConfiguredCoordinates: configuredCoordinates !== null
+  property double currentTimeMs: Date.now()
   readonly property var openMeteoCurrent: Model.openMeteoCurrentCondition(dailyForecastReport)
   readonly property var wttrCurrent: (report && report.current_condition && report.current_condition[0]) ? report.current_condition[0] : null
-  readonly property var nwsCurrent: Model.nwsCurrentCondition(nwsReport, openMeteoCurrent, Date.now())
+  readonly property var nwsCurrent: Model.nwsCurrentCondition(nwsReport, openMeteoCurrent, currentTimeMs)
   readonly property var current: nwsCurrent || openMeteoCurrent || wttrCurrent
   readonly property var areaInfo: report && report.nearest_area && report.nearest_area[0] ? report.nearest_area[0] : null
   readonly property var forecastDays: buildForecastDays()
-  readonly property var hourlyForecast: Model.hourlyForecast(nwsReport, dailyForecastReport, Date.now())
+  readonly property var hourlyForecast: Model.hourlyForecast(nwsReport, dailyForecastReport, currentTimeMs)
   readonly property var todayHighLow: Model.todayHighLow(dailyForecastReport, Qt.formatDate(new Date(), "yyyy-MM-dd"))
   readonly property var activeAlerts: nwsReport && nwsReport.alerts ? nwsReport.alerts : []
   readonly property string reportCountry: areaInfo && areaInfo.country && areaInfo.country[0] ? areaInfo.country[0].value : ""
@@ -252,7 +260,8 @@ Panel {
   readonly property bool useImperial: Model.shouldUseImperial(setting("unit", ""), Qt.locale().name, reportCountry)
 
   // Auto-refresh interval in minutes; clamped to a sane minimum.
-  readonly property int refreshMinutes: Math.max(1, parseInt(setting("refreshMinutes", 15), 10) || 15)
+  readonly property int refreshMinutes: Math.min(1440, Math.max(1,
+    parseInt(setting("refreshMinutes", 15), 10) || 15))
 
   readonly property string reportLocation:  configuredLocation || wttrLocation || (areaInfo && areaInfo.areaName && areaInfo.areaName[0] ? areaInfo.areaName[0].value : "")
   readonly property string reportTempNum:   current ? String(useImperial ? current.temp_F : current.temp_C) : ""
@@ -274,7 +283,10 @@ Panel {
     // starve retries for the rest of the session.
     forecastRetries = 0
     dailyForecastRetries = 0
-    if (!forecastProc.running) forecastProc.running = true
+    if (!forecastProc.running) {
+      forecastProc.requestGeneration = root.locationGeneration
+      forecastProc.running = true
+    }
     if (root.locationQuery === "" && !locationProc.running) locationProc.running = true
     // With stored coordinates this fetches open-meteo right away — no need
     // to wait for the slow wttr response. Without them it's a no-op until
@@ -295,35 +307,33 @@ Panel {
       return
     }
 
-    var lat = parseFloat(String(root.configuredLocationState.latitude))
-    var lon = parseFloat(String(root.configuredLocationState.longitude))
-    if (isNaN(lat) || isNaN(lon)) {
+    var coordinates = Model.validCoordinates(root.configuredLocationState.latitude, root.configuredLocationState.longitude)
+    if (!coordinates) {
       if (!sourceArea) return
-      lat = parseFloat(String(sourceArea.latitude || ""))
-      lon = parseFloat(String(sourceArea.longitude || ""))
+      coordinates = Model.validCoordinates(sourceArea.latitude, sourceArea.longitude)
     }
-    if (isNaN(lat) || isNaN(lon)) return
+    if (!coordinates) return
 
-    nwsProc.command = [Quickshell.env("HOME") + "/.config/omarchy/plugins/ali.weather/nws-weather.sh", String(lat), String(lon)]
+    nwsProc.requestGeneration = root.locationGeneration
+    nwsProc.command = [Quickshell.env("HOME") + "/.config/omarchy/plugins/ali.weather/nws-weather.sh",
+      String(coordinates.latitude), String(coordinates.longitude)]
     nwsProc.running = true
   }
 
   function refreshDailyForecast(sourceReport) {
     if (dailyForecastProc.running) return
 
-    var lat = parseFloat(String(root.configuredLocationState.latitude))
-    var lon = parseFloat(String(root.configuredLocationState.longitude))
-    if (isNaN(lat) || isNaN(lon)) {
+    var coordinates = Model.validCoordinates(root.configuredLocationState.latitude, root.configuredLocationState.longitude)
+    if (!coordinates) {
       var area = sourceReport && sourceReport.nearest_area && sourceReport.nearest_area[0] ? sourceReport.nearest_area[0] : root.areaInfo
       if (!area) return
-      lat = parseFloat(String(area.latitude || ""))
-      lon = parseFloat(String(area.longitude || ""))
+      coordinates = Model.validCoordinates(area.latitude, area.longitude)
     }
-    if (isNaN(lat) || isNaN(lon)) return
+    if (!coordinates) return
 
     var url = "https://api.open-meteo.com/v1/forecast"
-      + "?latitude=" + encodeURIComponent(String(lat))
-      + "&longitude=" + encodeURIComponent(String(lon))
+      + "?latitude=" + encodeURIComponent(String(coordinates.latitude))
+      + "&longitude=" + encodeURIComponent(String(coordinates.longitude))
       + "&daily=weather_code,temperature_2m_max,temperature_2m_min"
       + "&hourly=temperature_2m,weather_code,is_day"
       + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day"
@@ -331,6 +341,7 @@ Panel {
       + "&timezone=auto"
     dailyForecastProc.command = ["curl", "--proto", "=https", "--max-filesize", "2097152",
       "-fsS", "--max-time", "5", url]
+    dailyForecastProc.requestGeneration = root.locationGeneration
     dailyForecastProc.running = true
   }
 
@@ -343,6 +354,8 @@ Panel {
     savingLocation = false
     savingLocationQueryStarted = false
     locationSuggestions = []
+    locationSuggestionsQuery = ""
+    locationSaveError = ""
     suggestionIndex = 0
     Qt.callLater(function() {
       locationField.text = root.configuredLocation
@@ -356,41 +369,38 @@ Panel {
     savingLocation = false
     savingLocationQueryStarted = false
     locationSuggestions = []
+    locationSuggestionsQuery = ""
+    locationSaveError = ""
+    geocodePendingQuery = ""
     geocodeDebounce.stop()
     Qt.callLater(function() { if (keyCatcher) keyCatcher.forceActiveFocus() })
   }
 
   function commitLocation() {
-    var location = Model.locationCommit(locationField.text, locationSuggestions, suggestionIndex)
+    var location = Model.locationCommit(locationField.text, locationSuggestions, suggestionIndex, locationSuggestionsQuery)
     if (location.name === "") {
       clearLocation()
       return
     }
     savingLocation = true
     savingLocationQueryStarted = false
-    configuredLocationState = {
-      name: location.name,
-      latitude: location.latitude,
-      longitude: location.longitude
-    }
+    locationSaveError = ""
     persistLocation(location.name, location.latitude, location.longitude)
   }
 
   function clearLocation() {
+    savingLocation = true
+    savingLocationQueryStarted = false
+    locationSaveError = ""
     persistLocation("", null, null)
     wttrLocation = ""
-    cancelEditingLocation()
   }
 
   function pickSuggestion(suggestion) {
     if (!suggestion) return
     savingLocation = true
     savingLocationQueryStarted = false
-    configuredLocationState = {
-      name: suggestion.name,
-      latitude: suggestion.latitude,
-      longitude: suggestion.longitude
-    }
+    locationSaveError = ""
     persistLocation(suggestion.name, suggestion.latitude, suggestion.longitude)
   }
 
@@ -399,8 +409,12 @@ Panel {
   }
 
   function persistLocation(name, latitude, longitude) {
-    if (name && latitude !== null && longitude !== null)
-      locationSaveProc.command = ["omarchy-weather-location", "--set", name, latitude + "," + longitude]
+    var coordinates = Model.validCoordinates(latitude, longitude)
+    locationSaveProc.targetQuery = Model.wttrLocationQuery(name,
+      coordinates ? coordinates.latitude : null, coordinates ? coordinates.longitude : null)
+    if (name && coordinates)
+      locationSaveProc.command = ["omarchy-weather-location", "--set", name,
+        coordinates.latitude + "," + coordinates.longitude]
     else if (name)
       locationSaveProc.command = ["omarchy-weather-location", "--set", name]
     else
@@ -411,7 +425,7 @@ Panel {
   // Debounced geocoding. Only one curl runs at a time; if the query moved on
   // while a fetch was in flight, the latest query is fetched right after.
   function requestGeocode() {
-    var query = locationField.text.trim()
+    var query = locationField.text.trim().slice(0, 200)
     if (query.length < 2) {
       locationSuggestions = []
       return
@@ -421,6 +435,7 @@ Panel {
   }
 
   function startGeocode() {
+    if (geocodePendingQuery === "") return
     geocodeActiveQuery = geocodePendingQuery
     geocodeProc.command = ["curl", "--proto", "=https", "--max-filesize", "2097152",
       "-fsS", "--max-time", "5",
@@ -525,11 +540,13 @@ Panel {
 
   Process {
     id: forecastProc
+    property int requestGeneration: -1
     command: ["curl", "--proto", "=https", "--max-filesize", "2097152",
       "-fsS", "--max-time", "10", "https://wttr.in/" + root.locationQuery + "?format=j1"]
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
+        if (forecastProc.requestGeneration !== root.locationGeneration) return
         var raw = String(text || "").trim()
         if (!raw) {
           root.scheduleForecastRetry()
@@ -545,7 +562,7 @@ Panel {
             root.finishSavingLocation()
           // Stored coordinates already drove the fast open-meteo fetch from
           // refresh(); only auto-detect needs the area wttr reported.
-          if (isNaN(parseFloat(String(root.configuredLocationState.latitude))))
+          if (!root.hasConfiguredCoordinates)
             root.refreshDailyForecast(parsed)
           root.refreshNws(parsed)
         } catch (e) {
@@ -567,7 +584,11 @@ Panel {
   Timer {
     id: forecastRetryTimer
     interval: 2500
-    onTriggered: if (!forecastProc.running) forecastProc.running = true
+    onTriggered: {
+      if (forecastProc.running) return
+      forecastProc.requestGeneration = root.locationGeneration
+      forecastProc.running = true
+    }
   }
 
   // With configured coordinates this fetch is the only thing that updates the
@@ -587,9 +608,11 @@ Panel {
 
   Process {
     id: dailyForecastProc
+    property int requestGeneration: -1
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
+        if (dailyForecastProc.requestGeneration !== root.locationGeneration) return
         var raw = String(text || "").trim()
         if (!raw) {
           root.scheduleDailyForecastRetry()
@@ -613,9 +636,11 @@ Panel {
 
   Process {
     id: nwsProc
+    property int requestGeneration: -1
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
+        if (nwsProc.requestGeneration !== root.locationGeneration) return
         var raw = String(text || "").trim()
         if (!raw) return
         try {
@@ -633,8 +658,12 @@ Panel {
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
-        root.locationSuggestions = root.editingLocation ? Model.parseGeocodingResults(text) : []
-        root.suggestionIndex = 0
+        var currentQuery = root.editingLocation ? locationField.text.trim().slice(0, 200) : ""
+        if (currentQuery !== "" && currentQuery === root.geocodeActiveQuery) {
+          root.locationSuggestions = Model.parseGeocodingResults(text)
+          root.locationSuggestionsQuery = currentQuery
+          root.suggestionIndex = 0
+        }
         if (root.geocodePendingQuery !== root.geocodeActiveQuery) Qt.callLater(root.startGeocode)
       }
     }
@@ -648,13 +677,20 @@ Panel {
 
   Process {
     id: locationSaveProc
+    property string targetQuery: ""
     onExited: function(exitCode) {
-      if (exitCode !== 0 || !root.savingLocation) return
+      if (!root.savingLocation) return
+      if (exitCode !== 0) {
+        root.savingLocation = false
+        root.savingLocationQueryStarted = false
+        root.locationSaveError = "Could not save location"
+        return
+      }
 
       // FileView handles changed locations. Explicitly refresh here too so
       // saving the already-active location cannot strand the spinner.
       locationFile.reload()
-      if (!root.savingLocationQueryStarted) {
+      if (locationSaveProc.targetQuery === root.locationQuery && !root.savingLocationQueryStarted) {
         root.savingLocationQueryStarted = true
         root.forecastRetries = 0
         root.dailyForecastRetries = 0
@@ -686,6 +722,13 @@ Panel {
     repeat: true
     triggeredOnStart: true
     onTriggered: root.refresh()
+  }
+
+  Timer {
+    interval: 60 * 1000
+    running: true
+    repeat: true
+    onTriggered: root.currentTimeMs = Date.now()
   }
 
   IpcHandler {
@@ -798,9 +841,16 @@ Panel {
                   width: Style.space(240)
                   enabled: !root.savingLocation
                   placeholderText: "City or ZIP code"
-                  foreground: root.bar.foreground
+                  foreground: root.locationSaveError === "" ? root.bar.foreground : root.bar.urgent
                   font.family: root.bar.fontFamily
-                  onTextChanged: if (root.editingLocation && !root.savingLocation) geocodeDebounce.restart()
+                  maximumLength: 200
+                  onTextChanged: {
+                    if (!root.editingLocation || root.savingLocation) return
+                    root.locationSuggestions = []
+                    root.locationSuggestionsQuery = ""
+                    root.locationSaveError = ""
+                    geocodeDebounce.restart()
+                  }
 
                   Keys.onPressed: function(event) {
                     if (event.key === Qt.Key_Escape) {
