@@ -70,10 +70,20 @@ BarWidget {
     }
   }
 
+  TextMetrics {
+    id: reservedLabelMetrics
+    font.family: button.fontFamily
+    font.pixelSize: button.fontSize
+    text: "󰖐  -100°F"
+  }
+
   WidgetButton {
     id: button
     anchors.fill: parent
     bar: root.bar
+    fixedWidth: vertical ? -1 : Math.ceil(
+      reservedLabelMetrics.advanceWidth + scaledHorizontalMargin * 2)
+    labelVisible: vertical
     text: {
       if (!panelLoader.item) return ""
       var icon = panelLoader.item.label || ""
@@ -85,6 +95,18 @@ BarWidget {
     horizontalMargin: 6.5
     // Tooltip suppressed because the panel is the detail view.
     tooltipText: ""
+
+    Text {
+      visible: !button.vertical
+      anchors.left: parent.left
+      anchors.leftMargin: button.scaledHorizontalMargin
+      anchors.verticalCenter: parent.verticalCenter
+      text: button.text
+      color: button.active && button.useActiveColor ? button.activeColor : button.foreground
+      font.family: button.fontFamily
+      font.pixelSize: button.fontSize
+      textFormat: Text.PlainText
+    }
 
     onPressed: function(b) {
       if (!root.bar) return
