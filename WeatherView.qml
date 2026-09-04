@@ -236,6 +236,22 @@ KeyboardPanel {
                 font.pixelSize: root.todayHighLowSize
                 font.bold: true
               }
+              Text {
+                width: parent.width
+                horizontalAlignment: Text.AlignRight
+                text: root.openMeteoAttribution
+                color: Qt.darker(root.bar.foreground, attributionArea.containsMouse ? 1.1 : 1.5)
+                font.family: root.bar.fontFamily
+                font.pixelSize: Style.font.bodySmall
+
+                MouseArea {
+                  id: attributionArea
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: root.openOpenMeteoSource()
+                }
+              }
             }
           }
         }
@@ -664,6 +680,7 @@ KeyboardPanel {
             }
           }
         }
+
       }
     }
   }

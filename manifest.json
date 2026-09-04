@@ -3,8 +3,9 @@
   "id": "ali.iweather",
   "name": "iWeather",
   "version": "1.0.0",
-  "author": "Omarchy",
-  "description": "Weather pill with detail popup",
+  "author": "Ali Abbas",
+  "description": "Weather pill with location search, hourly and five-day forecasts, and U.S. NWS observations and alerts.",
+  "license": "MIT",
   "kinds": [
     "bar-widget"
   ],
@@ -13,8 +14,9 @@
   },
   "barWidget": {
     "displayName": "iWeather",
-    "description": "Weather pill with detail popup",
+    "description": "Current conditions, hourly and five-day forecasts, and U.S. weather alerts",
     "category": "Info",
+    "defaultSection": "center",
     "allowMultiple": false,
     "settingsForm": "weatherSettings"
   },

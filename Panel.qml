@@ -131,6 +131,7 @@ Panel {
   readonly property int dayLabelSize: 14
   readonly property int dayIconSize: 24
   readonly property int dayTemperatureSize: 14
+  readonly property string openMeteoAttribution: "Weather data by Open-Meteo.com  ↗"
 
   FontMetrics {
     id: locationMetrics
@@ -155,6 +156,11 @@ Panel {
     font.family: root.bar.fontFamily
     font.pixelSize: root.todayHighLowSize
     font.bold: true
+  }
+  FontMetrics {
+    id: attributionMetrics
+    font.family: root.bar.fontFamily
+    font.pixelSize: Style.font.bodySmall
   }
   FontMetrics {
     id: hourLabelMetrics
@@ -189,7 +195,8 @@ Panel {
   readonly property real hourlyNaturalWidth: root.hourCellWidth * 6 + root.columnGap * 5
   readonly property real detailsNaturalWidth: Math.min(Style.space(320), Math.max(
     conditionMetrics.advanceWidth(root.conditionDescription || "Current Conditions"),
-    highLowMetrics.advanceWidth("H:" + root.todayTemp("high") + "  L:" + root.todayTemp("low"))
+    highLowMetrics.advanceWidth("H:" + root.todayTemp("high") + "  L:" + root.todayTemp("low")),
+    attributionMetrics.advanceWidth(root.openMeteoAttribution)
   ))
   readonly property real headerNaturalWidth: Math.max(
     locationMetrics.advanceWidth((root.reportLocation || "").toUpperCase())
@@ -281,6 +288,10 @@ Panel {
   function openNwsSource() {
     if (/^https:\/\/forecast\.weather\.gov\//.test(root.nwsSourceUrl))
       Qt.openUrlExternally(root.nwsSourceUrl)
+  }
+
+  function openOpenMeteoSource() {
+    Qt.openUrlExternally("https://open-meteo.com/")
   }
 
   function refresh() {
