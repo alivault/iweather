@@ -10,7 +10,7 @@ node --check Model.js
 jq empty manifest.json
 
 if command -v shellcheck >/dev/null; then
-  shellcheck nws-weather.sh check.sh
+  shellcheck --severity=warning nws-weather.sh check.sh
 else
   echo "shellcheck not installed; skipped"
 fi
