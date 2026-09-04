@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "id": "ali.weather",
-  "name": "My Weather",
+  "id": "ali.iweather",
+  "name": "iWeather",
   "version": "1.0.0",
   "author": "Omarchy",
   "description": "Weather pill with detail popup",
@@ -12,7 +12,7 @@
     "barWidget": "BarWidget.qml"
   },
   "barWidget": {
-    "displayName": "My Weather",
+    "displayName": "iWeather",
     "description": "Weather pill with detail popup",
     "category": "Info",
     "allowMultiple": false,

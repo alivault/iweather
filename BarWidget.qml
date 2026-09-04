@@ -4,7 +4,7 @@ import qs.Ui
 
 BarWidget {
   id: root
-  moduleName: "ali.weather"
+  moduleName: "ali.iweather"
 
   function injectPanel() {
     var target = panelLoader.item
@@ -26,7 +26,7 @@ BarWidget {
   function toggleUnit() {
     if (!root.bar || !panelLoader.item) return
     var nextUnit = panelLoader.item.useImperial ? "metric" : "imperial"
-    root.bar.run("omarchy bar set ali.weather unit " + nextUnit)
+    root.bar.run("omarchy bar set ali.iweather unit " + nextUnit)
   }
 
   // Shape contract for shell.summon/hide/toggle routing (Bar.findPanelWidget
@@ -78,8 +78,9 @@ BarWidget {
       if (!panelLoader.item) return ""
       var icon = panelLoader.item.label || ""
       var temperature = panelLoader.item.reportTempNum || ""
-      if (icon === "" || temperature === "") return "󰖐 —" + panelLoader.item.tempUnit
-      return icon + " " + temperature + panelLoader.item.tempUnit
+      if (temperature === "") return icon || "󰖐"
+      if (icon === "") return temperature + panelLoader.item.tempUnit
+      return icon + "  " + temperature + panelLoader.item.tempUnit
     }
     horizontalMargin: 6.5
     // Tooltip suppressed because the panel is the detail view.

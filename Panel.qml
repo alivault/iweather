@@ -7,8 +7,8 @@ import "Model.js" as Model
 
 Panel {
   id: root
-  moduleName: "ali.weather"
-  ipcTarget: "ali.weather"
+  moduleName: "ali.iweather"
+  ipcTarget: "ali.iweather"
   manageIpc: false
 
   property var anchorItem: null

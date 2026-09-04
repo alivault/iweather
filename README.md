@@ -1,4 +1,4 @@
-# ali.weather
+# iWeather
 
 A cloned Omarchy weather bar widget with Open-Meteo forecasts, wttr.in
 location detection, and U.S. National Weather Service observations and alerts.

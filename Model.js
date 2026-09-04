@@ -382,6 +382,27 @@ function alertSummary(alerts) {
   return list.length > 1 ? first + " & " + (list.length - 1) + " More" : first
 }
 
+// NWS alert prose is hard-wrapped with single newlines. Let the UI wrap it
+// to its actual width while retaining intentional blank-line paragraphs.
+function formatAlertText(value) {
+  var text = String(value || "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/^\s+|\s+$/g, "")
+  if (text === "") return ""
+
+  var sourceParagraphs = text.split(/\n[ \t]*\n+/)
+  var paragraphs = []
+  for (var i = 0; i < sourceParagraphs.length; ++i) {
+    var paragraph = sourceParagraphs[i]
+      .replace(/[ \t]*\n[ \t]*/g, " ")
+      .replace(/[ \t]+/g, " ")
+      .replace(/^\s+|\s+$/g, "")
+    if (paragraph !== "") paragraphs.push(paragraph)
+  }
+  return paragraphs.join("\n\n")
+}
+
 function currentIcon(current, fallback) {
   if (!current) return fallback || ""
   if (current.openMeteoWeatherCode !== undefined && current.openMeteoWeatherCode !== null)
@@ -514,6 +535,7 @@ if (typeof module !== "undefined") {
     weatherDescription: weatherDescription,
     todayHighLow: todayHighLow,
     alertSummary: alertSummary,
+    formatAlertText: formatAlertText,
     currentIcon: currentIcon,
     provisionalCurrentIcon: provisionalCurrentIcon,
     weatherResponseCompletesSave: weatherResponseCompletesSave,

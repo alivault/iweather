@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import qs.Commons
 import qs.Ui
+import "Model.js" as Model
 
 KeyboardPanel {
   id: panel
@@ -442,7 +443,7 @@ KeyboardPanel {
                     Text {
                       visible: text !== ""
                       width: parent.width
-                      text: String(modelData.description || "")
+                      text: Model.formatAlertText(modelData.description)
                       textFormat: Text.PlainText
                       color: root.bar.foreground
                       font.family: root.bar.fontFamily
@@ -452,7 +453,7 @@ KeyboardPanel {
                     Text {
                       visible: text !== ""
                       width: parent.width
-                      text: String(modelData.instruction || "")
+                      text: Model.formatAlertText(modelData.instruction)
                       textFormat: Text.PlainText
                       color: Qt.darker(root.bar.foreground, 1.35)
                       font.family: root.bar.fontFamily

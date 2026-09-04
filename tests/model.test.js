@@ -65,3 +65,11 @@ test("weather API coordinates and location names are encoded safely", () => {
   assert.equal(model.wttrLocationQuery("ignored", 40.7, -74), "40.7,-74")
   assert.equal(model.wttrLocationQuery("New York/Manhattan", null, null), "New%20York%2FManhattan")
 })
+
+test("NWS alert text unwraps prose while preserving paragraphs", () => {
+  assert.equal(
+    model.formatAlertText(" First line\nsecond line. \n\n Next paragraph.\r\n"),
+    "First line second line.\n\nNext paragraph."
+  )
+  assert.equal(model.formatAlertText(" \n\t"), "")
+})
