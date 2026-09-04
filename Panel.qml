@@ -111,9 +111,10 @@ Panel {
   readonly property int panelPadding: 16
   readonly property int contentPadding: 0
   readonly property int rowPadding: 8
+  readonly property int headerTopMargin: 6
   readonly property int headerRowGap: 8
   readonly property int currentDetailsGap: 8
-  readonly property int headerBottomMargin: 20
+  readonly property int headerBottomMargin: 16
   readonly property int itemGap: 4
   readonly property int columnGap: 8
   readonly property int cellPadding: 8

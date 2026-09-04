@@ -68,7 +68,7 @@ KeyboardPanel {
             anchors.right: parent.right
             anchors.rightMargin: root.contentPadding
             anchors.top: parent.top
-            anchors.topMargin: root.rowPadding
+            anchors.topMargin: root.headerTopMargin
             height: Math.max(
               locationRow.visible ? locationRow.implicitHeight : 0,
               locationEditorRow.visible ? locationEditorRow.implicitHeight : 0,
