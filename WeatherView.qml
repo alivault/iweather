@@ -32,7 +32,8 @@ KeyboardPanel {
   contentWidth: panel.fittedContentWidth(
     root.naturalInnerWidth + panel.padding * 2
       + Border.left(panel.borderSpec) + Border.right(panel.borderSpec))
-  contentHeight: panel.fittedContentHeight(weatherColumn.implicitHeight)
+  contentHeight: panel.fittedContentHeight(
+    weatherColumn.implicitHeight + attributionFooter.height)
 
   PanelKeyCatcher {
     id: keyCatcher
@@ -44,7 +45,10 @@ KeyboardPanel {
 
     Flickable {
       id: weatherScroll
-      anchors.fill: parent
+      anchors.top: parent.top
+      anchors.right: parent.right
+      anchors.bottom: attributionFooter.top
+      anchors.left: parent.left
       contentWidth: width
       contentHeight: weatherColumn.implicitHeight
       clip: true
@@ -235,22 +239,6 @@ KeyboardPanel {
                 font.family: root.bar.fontFamily
                 font.pixelSize: root.todayHighLowSize
                 font.bold: true
-              }
-              Text {
-                width: parent.width
-                horizontalAlignment: Text.AlignRight
-                text: root.openMeteoAttribution
-                color: Qt.darker(root.bar.foreground, attributionArea.containsMouse ? 1.1 : 1.5)
-                font.family: root.bar.fontFamily
-                font.pixelSize: Style.font.bodySmall
-
-                MouseArea {
-                  id: attributionArea
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: root.openOpenMeteoSource()
-                }
               }
             }
           }
@@ -681,6 +669,31 @@ KeyboardPanel {
           }
         }
 
+      }
+    }
+
+    Item {
+      id: attributionFooter
+      visible: root.dailyForecastReport !== null
+      anchors.right: parent.right
+      anchors.bottom: parent.bottom
+      anchors.left: parent.left
+      height: visible ? attributionLabel.implicitHeight + root.itemGap * 2 : 0
+
+      Text {
+        id: attributionLabel
+        anchors.centerIn: parent
+        text: root.openMeteoAttribution
+        color: Qt.darker(root.bar.foreground, attributionArea.containsMouse ? 1.1 : 1.5)
+        font.family: root.bar.fontFamily
+        font.pixelSize: Style.font.caption
+      }
+      MouseArea {
+        id: attributionArea
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.openOpenMeteoSource()
       }
     }
   }
