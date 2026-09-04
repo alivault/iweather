@@ -131,7 +131,7 @@ Panel {
   readonly property int dayLabelSize: 14
   readonly property int dayIconSize: 24
   readonly property int dayTemperatureSize: 14
-  readonly property string openMeteoAttribution: "Weather data by Open-Meteo.com  ↗"
+  readonly property string openMeteoAttribution: "Weather data by Open-Meteo.com"
 
   FontMetrics {
     id: locationMetrics
