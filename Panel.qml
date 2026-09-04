@@ -122,7 +122,7 @@ Panel {
   readonly property int currentIconSize: 24
   readonly property int locationSize: 14
   readonly property int conditionSize: 14
-  readonly property int todayHighLowSize: 12
+  readonly property int todayHighLowSize: dayTemperatureSize
   readonly property int alertSize: 12
   readonly property int hourLabelSize: 12
   readonly property int hourIconSize: 24
