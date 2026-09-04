@@ -7,7 +7,7 @@ set -euo pipefail
 
 latitude=${1:?latitude required}
 longitude=${2:?longitude required}
-user_agent="iWeather/1.0 (+https://github.com/alivault/ali.weather)"
+user_agent="iWeather/1.0 (+https://github.com/alivault/iweather)"
 curl_args=(--proto '=https' --max-filesize 2097152 -fsS --max-time 8
   -H "User-Agent: $user_agent" -H "Accept: application/geo+json")
 

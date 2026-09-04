@@ -31,7 +31,7 @@ service, account, or API-key requirement.
 ## Install
 
 ```bash
-omarchy plugin add https://github.com/alivault/ali.weather.git --enable
+omarchy plugin add https://github.com/alivault/iweather.git --enable
 ```
 
 The plugin declares itself as a clone of `omarchy.weather`, so enabling it
