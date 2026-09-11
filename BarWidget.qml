@@ -74,7 +74,12 @@ BarWidget {
     id: reservedLabelMetrics
     font.family: button.fontFamily
     font.pixelSize: button.fontSize
-    text: "󰖐  -100°F"
+    // Reserving width for the imperial worst case ("-100°F") left a wide gap
+    // when displaying metric — size the reservation to whichever unit is
+    // actually shown, using "-19°C" as a realistic (not extreme-record) cold
+    // reading for the metric case.
+    text: (panelLoader.item && panelLoader.item.useImperial === false)
+      ? "󰖐  -19°C" : "󰖐  -100°F"
   }
 
   WidgetButton {
@@ -98,9 +103,7 @@ BarWidget {
 
     Text {
       visible: !button.vertical
-      anchors.left: parent.left
-      anchors.leftMargin: button.scaledHorizontalMargin
-      anchors.verticalCenter: parent.verticalCenter
+      anchors.centerIn: parent
       text: button.text
       color: button.active && button.useActiveColor ? button.activeColor : button.foreground
       font.family: button.fontFamily
