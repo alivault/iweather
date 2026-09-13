@@ -74,7 +74,7 @@ BarWidget {
     id: reservedLabelMetrics
     font.family: button.fontFamily
     font.pixelSize: button.fontSize
-    text: "󰖐  -100°F"
+    text: "󰖐 -100°F"
   }
 
   WidgetButton {
@@ -90,7 +90,7 @@ BarWidget {
       var temperature = panelLoader.item.reportTempNum || ""
       if (temperature === "") return icon || "󰖐"
       if (icon === "") return temperature + panelLoader.item.tempUnit
-      return icon + "  " + temperature + panelLoader.item.tempUnit
+      return icon + " " + temperature + panelLoader.item.tempUnit
     }
     horizontalMargin: 6.5
     // Tooltip suppressed because the panel is the detail view.
