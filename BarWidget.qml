@@ -55,6 +55,7 @@ BarWidget {
   visible: panelLoader.status !== Loader.Error
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
+  readonly property real openPanelIndicatorWidth: labelMetrics.advanceWidth
 
   onBarChanged: injectPanel()
   onSettingsChanged: injectPanel()
@@ -71,10 +72,10 @@ BarWidget {
   }
 
   TextMetrics {
-    id: reservedLabelMetrics
+    id: labelMetrics
     font.family: button.fontFamily
     font.pixelSize: button.fontSize
-    text: "󰖐 -100°F"
+    text: button.text
   }
 
   WidgetButton {
@@ -82,7 +83,7 @@ BarWidget {
     anchors.fill: parent
     bar: root.bar
     fixedWidth: vertical ? -1 : Math.ceil(
-      reservedLabelMetrics.advanceWidth + scaledHorizontalMargin * 2)
+      labelMetrics.advanceWidth + scaledHorizontalMargin * 2)
     labelVisible: vertical
     text: {
       if (!panelLoader.item) return ""
